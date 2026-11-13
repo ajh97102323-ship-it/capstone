@@ -52,5 +52,19 @@ def test_presentation_is_self_contained_with_demo(tmp_path):
     assert build_presentation.main(["--model", str(tmp_path / "none"), "--out", str(out)]) == 1
 
 
+def test_demo_page_is_self_contained_with_four_tabs(tmp_path):
+    from report_site import build_demo
+    out = tmp_path / "demo.html"
+    assert build_demo.main(["--model", MODEL, "--out", str(out)]) == 0
+    html = out.read_text(encoding="utf-8")
+    assert not re.findall(r'<script[^>]*\ssrc=', html) and "<link" not in html
+    for tab in ("예측", "비교", "검증", "최적화"):
+        assert f'data-tab="{tab}"' in html, tab
+    for key in ('id="save-btn"', 'id="val-btn"', 'id="opt-verify-btn"', "verifyOde", "Malgun Gothic", "새로 고침하면 사라집니다"):
+        assert key in html, key
+    assert "__DEMO_DATA__" not in html
+    assert build_demo.main(["--model", str(tmp_path / "none"), "--out", str(out)]) == 1
+
+
 def test_missing_input_returns_1(tmp_path):
     assert build.main(["--out", str(tmp_path), "--report", str(tmp_path / "none")]) == 1

@@ -121,6 +121,40 @@ def test_js_matches_python(sur, run_js):
     assert res["err"] and res["err"].startswith("RangeError") and "N" in res["err"]
 
 
+VERIFY_RUNNER = r"""
+const fs = require('fs');
+const LH2 = require(process.argv[2]);
+const m = LH2.create(JSON.parse(fs.readFileSync(process.argv[3], 'utf8')));
+const cases = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'));
+console.log(JSON.stringify(cases.map(c => { const o = m.optimize(c.design, c.econ); return m.verifyOde(c.design, c.econ, o); })));
+"""
+
+
+def test_js_verify_ode_matches_python(sur, run_js, tmp_path):
+    """시연 페이지의 '최적 후보 ODE 검증'이 optimize.verify_with_ode와 같은 결론을 낸다."""
+    from optimize import verify_with_ode
+    base = _designs(sur, n=0)[0]
+    cases = [{"design": base, "econ": ECON}, {"design": base, "econ": dict(ECON, p_h2=10.0)}]
+    runner = tmp_path / "v.js"
+    runner.write_text(VERIFY_RUNNER, encoding="utf-8")
+    data = tmp_path / "d.json"
+    data.write_text(json.dumps(export_demo.payload(ROOT / DEFAULT_MODEL)), encoding="utf-8")
+    cf = tmp_path / "c.json"
+    cf.write_text(json.dumps(cases), encoding="utf-8")
+    p = subprocess.run([NODE, str(runner), str(CORE), str(data), str(cf)], capture_output=True, text=True,
+                       encoding="utf-8", timeout=300)
+    assert p.returncode == 0, p.stderr
+    for c, js in zip(cases, json.loads(p.stdout)):
+        prob = Problem(design=c["design"], cost=CostParams(**c["econ"]))
+        py = verify_with_ode(prob, optimize_layers(sur, prob))
+        assert js["candidates"] == list(py.candidates)
+        # RK4(JS)와 LSODA(Python)의 미세한 차이로 평평한 구간에서 ±1층은 허용
+        assert abs(js["n_ode"] - py.n_ode) <= 1 and abs(js["n_recommended"] - py.n_recommended) <= 1
+        assert js["total_ode"] == pytest.approx(py.total_ode, rel=1e-3)
+        assert abs(js["rel_cost_err"] - py.rel_cost_err) < 1e-3
+        assert js["dN"] == js["n_sur"] - js["n_ode"]
+
+
 def test_payload_has_no_cost_inputs_and_records_model(sur):
     p = export_demo.payload(ROOT / DEFAULT_MODEL)
     assert p["model"]["input_names"] == list(sur.train_range["names"])

@@ -17,8 +17,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 
 
-def render(model_dir) -> str:
-    tpl = (HERE / "presentation_template.html").read_text(encoding="utf-8")
+def render(model_dir, template: str = "presentation_template.html") -> str:
+    tpl = (HERE / template).read_text(encoding="utf-8")
     core = (HERE / "demo_core.js").read_text(encoding="utf-8")
     data = json.dumps(export_demo.payload(model_dir), ensure_ascii=False, allow_nan=False).replace("</", "<\\/")
     for key in ("__DEMO_DATA__", "/*__DEMO_CORE__*/"):

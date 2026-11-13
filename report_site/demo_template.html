@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LH2 단열 설계 시연</title>
+<style>
+:root {
+  --bg: #f4f4f1; --surface: #ffffff; --line: #e3e2de; --ink: #0b0b0b; --ink-2: #52514e; --muted: #85837d; --grid: #ecebe7;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --hi: #eaf2fc; --warn-bg: #fff4dc; --warn: #8a5a00; --ok: #1a7f37; --bad: #b42318;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif; font-size: 14px; }
+header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+header h1 { font-size: 20px; margin: 0; }
+header span { color: var(--muted); font-size: 12px; }
+.layout { display: grid; grid-template-columns: 330px 1fr; min-height: calc(100vh - 56px); }
+aside { background: var(--surface); border-right: 1px solid var(--line); padding: 12px 16px 24px; overflow-y: auto; max-height: calc(100vh - 56px); position: sticky; top: 0; }
+aside h3 { font-size: 13px; color: var(--muted); margin: 14px 0 4px; font-weight: 700; }
+aside .note { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: 6px; padding: 6px 8px; margin-top: 12px; }
+.row { display: grid; grid-template-columns: 1fr 96px; gap: 2px 8px; align-items: center; margin: 7px 0; }
+.row label { grid-column: 1 / 3; font-size: 13px; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+.row label small { color: var(--muted); white-space: nowrap; }
+.row input[type=range] { width: 100%; margin: 0; accent-color: var(--s1); }
+.row input[type=number] { width: 96px; font: inherit; font-size: 13px; padding: 3px 5px; border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+main { padding: 14px 20px 32px; min-width: 0; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.tabs button { font: inherit; font-size: 15px; font-weight: 700; padding: 9px 18px; border: 0; background: none; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--s1); }
+.panel { display: none; } .panel.on { display: block; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.chart { height: 360px; position: relative; } .chart.sm { height: 240px; }
+.chart canvas { width: 100%; height: 100%; display: block; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.m { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.m .k { font-size: 12px; color: var(--ink-2); } .m .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.m.hl { border-color: var(--s1); background: var(--hi); }
+.warn { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 13px; }
+.btn { font: inherit; font-weight: 700; background: var(--s1); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+.btn.ghost { background: none; color: var(--bad); border: 1px solid var(--line); padding: 3px 10px; font-weight: 400; }
+.inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.inline input[type=text] { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; width: 220px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th { color: var(--ink-2); font-size: 12px; } th:first-child, td:first-child { text-align: left; }
+.sw { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.muted { color: var(--muted); font-size: 13px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; } aside { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+  .grid2 { grid-template-columns: 1fr; } .tabs button { padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+<header><h1>액화수소 탱크 단열 설계 시연</h1><span id="meta">브라우저 안에서 계산 · 서버 없음</span></header>
+<div class="layout">
+<aside>
+  <h3>설계 입력 (학습 범위로 제한 · 값 직접 입력 가능)</h3>
+  <div id="design-ctl"></div>
+  <h3>경제 변수 (대리모델 입력 아님, 후처리)</h3>
+  <div id="econ-ctl"></div>
+  <div class="note">저장한 설계안은 이 브라우저 창에만 있으며 새로 고침하면 사라집니다.</div>
+</aside>
+<main>
+  <nav class="tabs">
+    <button data-tab="예측" class="on">예측</button><button data-tab="비교">비교</button><button data-tab="검증">검증</button><button data-tab="최적화">최적화</button>
+  </nav>
+
+  <section class="panel on" id="p-예측">
+    <div class="card"><div class="chart"><canvas id="cv-pred"></canvas></div></div>
+    <div class="warn" id="pred-warn" style="display:none"></div>
+    <div class="metrics">
+      <div class="m"><div class="k">초기 열유입 [W]</div><div class="v" id="m-q0"></div></div>
+      <div class="m"><div class="k" id="m-rt-k">180일 후 잔량비 [-]</div><div class="v" id="m-rt"></div></div>
+      <div class="m"><div class="k">일일 보일오프율 [%/day]</div><div class="v" id="m-rate"></div></div>
+      <div class="m"><div class="k">소진 시점 [day]</div><div class="v" id="m-empty"></div></div>
+      <div class="m"><div class="k">연간 MLI 비용 [$/yr]</div><div class="v" id="m-mli"></div></div>
+      <div class="m"><div class="k">연간 보일오프 비용 [$/yr]</div><div class="v" id="m-boil"></div></div>
+      <div class="m hl"><div class="k">연간 총비용 [$/yr]</div><div class="v" id="m-total"></div></div>
+    </div>
+    <div class="inline"><input type="text" id="save-name" placeholder="설계안 이름"><button class="btn" id="save-btn">설계안 저장</button><span class="muted" id="save-msg"></span></div>
+  </section>
+
+  <section class="panel" id="p-비교">
+    <div id="cmp-empty" class="muted">저장한 설계안이 없습니다. 예측 탭에서 '설계안 저장'을 누르세요.</div>
+    <div id="cmp-body" style="display:none">
+      <div class="card"><div class="chart"><canvas id="cv-cmp"></canvas></div></div>
+      <div class="card" style="margin-top:12px; overflow-x:auto"><table id="cmp-table"></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-검증">
+    <div class="inline" style="margin:0 0 12px"><button class="btn" id="val-btn">ODE로 검증</button><span class="muted">현재 설계를 물리 모델(ODE)로 다시 풀어 AI 예측과 겹쳐 봅니다.</span></div>
+    <div class="card"><div class="chart"><canvas id="cv-val"></canvas></div></div>
+    <div class="metrics" id="val-metrics" style="display:none">
+      <div class="m"><div class="k">최대 오차 [-]</div><div class="v" id="v-max"></div></div>
+      <div class="m"><div class="k">365일 잔량비 오차 [-]</div><div class="v" id="v-365"></div></div>
+      <div class="m"><div class="k">보일오프 비용 차이 [$/yr]</div><div class="v" id="v-cost"></div></div>
+      <div class="m"><div class="k">계산 시간 AI / ODE [ms]</div><div class="v" id="v-ms"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-최적화">
+    <div class="card"><div class="chart"><canvas id="cv-opt"></canvas></div></div>
+    <div class="warn" id="opt-warn" style="display:none"></div>
+    <div class="metrics">
+      <div class="m hl"><div class="k">최적 적층수 [layer]</div><div class="v" id="o-n"></div></div>
+      <div class="m"><div class="k">최적 총비용 [$/yr]</div><div class="v" id="o-total"></div></div>
+      <div class="m"><div class="k">평평한 구간 (+1%) [layer]</div><div class="v" id="o-flat"></div></div>
+      <div class="m"><div class="k">계산 시간 [ms]</div><div class="v" id="o-ms"></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="muted" style="margin-bottom:4px">최적 설계의 잔량 곡선 (대리모델)</div><div class="chart sm"><canvas id="cv-opt-curve"></canvas></div></div>
+      <div class="card">
+        <div class="inline" style="margin:0 0 8px"><button class="btn" id="opt-verify-btn">최적 후보 ODE 검증</button></div>
+        <div class="muted" id="ov-note">대리모델 상위 후보 5개와 적층수 10~120층 전체를 ODE로 다시 계산합니다(1초 안팎).</div>
+        <div class="metrics" id="ov-metrics" style="display:none; grid-template-columns: 1fr 1fr">
+          <div class="m hl"><div class="k">추천 적층수 (ODE 재검증) [layer]</div><div class="v" id="ov-rec"></div></div>
+          <div class="m"><div class="k">ODE 최적 적층수 [layer]</div><div class="v" id="ov-ode"></div></div>
+          <div class="m"><div class="k">대리모델 최적 N의 비용 손해 [%]</div><div class="v" id="ov-err"></div></div>
+          <div class="m"><div class="k">ODE 계산 시간 [ms]</div><div class="v" id="ov-ms"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script id="demo-data" type="application/json">__DEMO_DATA__</script>
+<script>
+/*__DEMO_CORE__*/
+</script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt = (x, d = 0) => x == null || !Number.isFinite(x) ? '–' : x.toLocaleString('ko-KR', {minimumFractionDigits: d, maximumFractionDigits: d});
+  let M;
+  try { M = LH2.create(JSON.parse($('demo-data').textContent)); }
+  catch (e) { document.querySelector('main').innerHTML = `<div class="warn">시연 데이터를 불러오지 못했습니다: ${e.message}</div>`; return; }
+  $('meta').textContent = `브라우저 안에서 계산 · 서버 없음 · 대리모델 ${M.meta.name} (학습 데이터 ${M.meta.dataset}) · 물리 모델 ${M.meta.physics.version}`;
+
+  const LABEL = {N: ['MLI 적층수 N', 'layer'], Nbar: ['적층밀도 N̄', 'layer/cm'], eps: ['실드 방사율 ε', '-'], G_sup: ['지지구조 컨덕턴스', 'W/K'],
+    Pv0: ['초기 진공압', 'Pa'], G_out: ['아웃개싱', 'Pa·m³/s'], S: ['게터 배기속도', 'm³/s'], R: ['탱크 반경 R', 'm'], LD: ['실린더 길이비 L/D', '-'], fill: ['초기 충전율', '-']};
+  const design = {N: 40, Nbar: 20, eps: 0.03, G_sup: 1e-3, Pv0: 1e-3, G_out: 1e-8, S: 1e-3, R: 1.5, LD: 1.0, fill: 0.9};
+  const econ = {c_layer: 10, c_fixed: 50, p_h2: 5, life_years: 20, discount: 0.05};
+  const ui = {t_query: 180};
+  const saved = [];          // 이 창에만 있는 저장 설계안
+  let valRes = null, optVer = null;
+  const PALETTE = ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7', '--s8'];
+
+  const show = v => Math.abs(v) >= 1e4 || (Math.abs(v) < 1e-2 && v !== 0) ? v.toExponential(2) : (+v.toPrecision(4)).toString();
+  function addRow(box, label, unit, lo, hi, step, log, get, set) {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<label>${label} <small>[${unit}] ${show(lo)} ~ ${show(hi)}</small></label><input type="range" aria-label="${label}"><input type="number" aria-label="${label} 직접 입력">`;
+    const [rg, nb] = row.querySelectorAll('input');
+    const toR = v => log ? Math.log10(v) : v, fromR = r => log ? Math.pow(10, r) : r;
+    rg.min = toR(lo); rg.max = toR(hi); rg.step = log ? (toR(hi) - toR(lo)) / 100 : step;
+    nb.min = lo; nb.max = hi; nb.step = log ? 'any' : step;
+    const sync = () => { rg.value = toR(get()); nb.value = show(get()); };
+    rg.addEventListener('input', () => { set(+fromR(+rg.value).toPrecision(4)); nb.value = show(get()); changed(); });
+    nb.addEventListener('change', () => { let v = +nb.value; if (!Number.isFinite(v)) v = get(); set(Math.min(hi, Math.max(lo, v))); sync(); changed(); });
+    sync(); box.appendChild(row);
+  }
+  M.names.forEach((k, j) => addRow($('design-ctl'), LABEL[k][0], LABEL[k][1], M.lo[j], M.hi[j], k === 'N' ? 1 : (M.hi[j] - M.lo[j]) / 100, M.log[j],
+    () => design[k], v => { design[k] = k === 'N' ? Math.round(v) : v; }));
+  addRow($('design-ctl'), '지정 기간 t', 'day', 1, 365, 1, false, () => ui.t_query, v => { ui.t_query = Math.round(v); });
+  [['p_h2', '수소 가격 p_H2', '$/kg', 2, 15, 0.5], ['c_layer', '층당 단가 c_layer', '$/(m²·layer)', 1, 50, 0.5], ['c_fixed', 'MLI 고정비', '$/m²', 0, 200, 5],
+   ['life_years', '수명', 'yr', 1, 50, 1], ['discount', '할인율', '-', 0, 0.2, 0.005]]
+    .forEach(([k, label, unit, lo, hi, st]) => addRow($('econ-ctl'), label, unit, lo, hi, st, false, () => econ[k], v => { econ[k] = v; }));
+
+  // ---------------- 선 그래프 (외부 라이브러리 없이) ----------------
+  function chart(cv, o) {
+    const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+    if (!W || !H) return;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const pad = {l: 66, r: 14, t: 30, b: 40}, pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    const X = x => pad.l + (x - o.x0) / (o.x1 - o.x0) * pw, Y = y => pad.t + (1 - (y - o.y0) / (o.y1 - o.y0)) * ph;
+    g.font = "12px 'Malgun Gothic', sans-serif"; g.lineWidth = 1; g.strokeStyle = css('--grid'); g.fillStyle = css('--muted');
+    o.yt.forEach(v => { g.beginPath(); g.moveTo(pad.l, Y(v)); g.lineTo(pad.l + pw, Y(v)); g.stroke(); g.textAlign = 'right'; g.fillText(o.yf(v), pad.l - 6, Y(v) + 4); });
+    o.xt.forEach(v => { g.textAlign = 'center'; g.fillText(v, X(v), pad.t + ph + 16); });
+    g.fillStyle = css('--ink-2'); g.textAlign = 'center'; g.fillText(o.xl, pad.l + pw / 2, H - 6);
+    g.save(); g.translate(14, pad.t + ph / 2); g.rotate(-Math.PI / 2); g.fillText(o.yl, 0, 0); g.restore();
+    if (o.band) { g.fillStyle = 'rgba(133,131,125,.15)'; g.fillRect(X(o.band[0]), pad.t, X(o.band[1]) - X(o.band[0]), ph); }
+    g.save(); g.beginPath(); g.rect(pad.l, pad.t, pw, ph); g.clip();
+    o.series.forEach(s => {
+      g.strokeStyle = s.c; g.lineWidth = s.w || 2.5; g.setLineDash(s.dash || []); g.beginPath(); let pen = false;
+      s.x.forEach((x, k) => { const y = s.y[k]; if (y == null || !Number.isFinite(y)) { pen = false; return; }
+        if (pen) g.lineTo(X(x), Y(y)); else { g.moveTo(X(x), Y(y)); pen = true; } });
+      g.stroke();
+    });
+    g.restore(); g.setLineDash([]);
+    if (o.vline != null) {
+      g.strokeStyle = css('--ink'); g.lineWidth = 1.5; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(X(o.vline), pad.t); g.lineTo(X(o.vline), pad.t + ph); g.stroke(); g.setLineDash([]);
+      g.fillStyle = css('--ink'); g.textAlign = 'center'; g.font = "bold 13px 'Malgun Gothic', sans-serif"; g.fillText(o.vlabel, X(o.vline), pad.t - 10);
+    }
+    if (o.dot) { g.fillStyle = o.dot.c; g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(X(o.dot.x), Y(o.dot.y), 6, 0, 7); g.fill(); g.stroke(); }
+    // 범례 (오른쪽 위, 글자는 본문색)
+    g.font = "12px 'Malgun Gothic', sans-serif"; g.textAlign = 'left'; let lx = pad.l + pw;
+    [...o.series].filter(s => s.label).reverse().forEach(s => {
+      const tw = g.measureText(s.label).width; lx -= tw + 30;
+      g.strokeStyle = s.c; g.lineWidth = 3; g.setLineDash(s.dash || []); g.beginPath(); g.moveTo(lx, 14); g.lineTo(lx + 18, 14); g.stroke(); g.setLineDash([]);
+      g.fillStyle = css('--ink-2'); g.fillText(s.label, lx + 22, 18);
+    });
+  }
+  const niceMax = v => { const p = Math.pow(10, Math.floor(Math.log10(v))); return Math.ceil(v / p * 2) / 2 * p; };
+  const ticks = (a, b, n) => Array.from({length: n + 1}, (_, k) => a + (b - a) * k / n);
+  const curveChart = (cv, series) => chart(cv, {x0: 0, x1: 365, y0: 0, y1: 1, xt: [0, 60, 120, 180, 240, 300, 365], yt: ticks(0, 1, 5),
+    yf: v => v.toFixed(1), xl: '시간 [day]', yl: '잔량비 [-]', series});
+  const interp = (x, xs, ys) => { for (let k = 1; k < xs.length; k++) if (xs[k] >= x) { const a = (x - xs[k - 1]) / (xs[k] - xs[k - 1]); return ys[k - 1] + a * (ys[k] - ys[k - 1]); } return ys[ys.length - 1]; };
+
+  function summarize(d) {
+    const p = M.predict(d), r365 = p.curve[p.curve.length - 1], c = M.costs(d, econ, d.N, r365);
+    let te = null;
+    for (let k = 1; k < p.t.length; k++) if (p.curve[k] < M.constants.DEPLETION_TOL) {
+      const a = (p.curve[k - 1] - M.constants.DEPLETION_TOL) / (p.curve[k - 1] - p.curve[k]); te = p.t[k - 1] + a * (p.t[k] - p.t[k - 1]); break; }
+    return Object.assign({t: p.t, curve: p.curve, Q0: p.Q0, rate: p.k * 100, te, rt: interp(ui.t_query, p.t, p.curve), m0: p.m0}, c);
+  }
+
+  // ---------------- 탭별 그리기 ----------------
+  function drawPred() {
+    const s = summarize(design);
+    $('m-q0').textContent = fmt(s.Q0, 2); $('m-rt-k').textContent = `${ui.t_query}일 후 잔량비 [-]`; $('m-rt').textContent = s.rt.toFixed(3);
+    $('m-rate').textContent = s.rate.toFixed(3); $('m-empty').textContent = s.te == null ? '1년 내 없음' : fmt(s.te);
+    $('m-mli').textContent = fmt(s.annual_mli); $('m-boil').textContent = fmt(s.annual_boiloff); $('m-total').textContent = fmt(s.annual_total);
+    $('pred-warn').style.display = s.te == null ? 'none' : '';
+    $('pred-warn').textContent = s.te == null ? '' : `액체가 약 ${fmt(s.te)}일에 소진됩니다. 소진 뒤 손실이 잘려 보일오프 비용이 과소평가됩니다.`;
+    curveChart($('cv-pred'), [{x: s.t, y: s.curve, c: css('--s1'), w: 3, label: '현재 설계 (AI)'}]);
+  }
+  function drawCmp() {
+    $('cmp-empty').style.display = saved.length ? 'none' : ''; $('cmp-body').style.display = saved.length ? '' : 'none';
+    if (!saved.length) return;
+    curveChart($('cv-cmp'), saved.map((s, k) => ({x: s.sum.t, y: s.sum.curve, c: css(PALETTE[k % 8]), label: s.name})));
+    $('cmp-table').innerHTML = '<tr><th>설계안</th><th>N [layer]</th><th>R [m]</th><th>L/D [-]</th><th>초기 질량 [kg]</th><th>열유입 [W]</th><th>365일 잔량비 [-]</th><th>소진 [day]</th><th>MLI [$/yr]</th><th>보일오프 [$/yr]</th><th>총비용 [$/yr]</th><th></th></tr>' +
+      saved.map((s, k) => `<tr><td><span class="sw" style="background:${css(PALETTE[k % 8])}"></span>${s.name}</td><td>${s.d.N}</td><td>${s.d.R}</td><td>${s.d.LD}</td>
+        <td>${fmt(s.sum.m0)}</td><td>${fmt(s.sum.Q0, 2)}</td><td>${s.sum.curve[s.sum.curve.length - 1].toFixed(3)}</td><td>${s.sum.te == null ? '–' : fmt(s.sum.te)}</td>
+        <td>${fmt(s.sum.annual_mli)}</td><td>${fmt(s.sum.annual_boiloff)}</td><td><b>${fmt(s.sum.annual_total)}</b></td>
+        <td><button class="btn ghost" data-del="${k}">삭제</button></td></tr>`).join('');
+  }
+  function drawVal() {
+    const p = M.predict(design), series = [{x: p.t, y: p.curve, c: css('--s1'), w: 3, label: 'AI 대리모델'}];
+    if (valRes) series.push({x: valRes.t, y: valRes.ratio, c: css('--s2'), dash: [7, 5], label: 'ODE (물리 모델)'});
+    curveChart($('cv-val'), series);
+  }
+  function drawOpt() {
+    const t0 = performance.now(), o = M.optimize(design, econ), ms = performance.now() - t0;
+    const R = o.rows, Ns = o.N, tot = R.map(r => r.depleted ? null : r.annual_total), boil = R.map(r => r.depleted ? null : r.annual_boiloff);
+    const series = [{x: Ns, y: R.map(r => r.annual_mli), c: css('--s1'), label: 'MLI 비용'}, {x: Ns, y: boil, c: css('--s2'), label: '보일오프 비용'},
+      {x: Ns, y: tot, c: css('--s3'), w: 3.5, label: '총비용 (AI)'}];
+    if (optVer) series.push({x: optVer.scan.map(r => r.N), y: optVer.scan.map(r => r.depleted ? null : r.annual_total), c: css('--muted'), dash: [6, 4], label: '총비용 (ODE)'});
+    const ymax = niceMax(Math.max(...R.map(r => r.annual_mli), ...tot.filter(v => v != null), ...boil.filter(v => v != null)) * 1.05);
+    chart($('cv-opt'), {x0: 10, x1: 120, y0: 0, y1: ymax, xt: [10, 20, 40, 60, 80, 100, 120], yt: ticks(0, ymax, 5), yf: v => fmt(v),
+      xl: '적층수 N [layer]', yl: '연간 비용 [$/yr]', band: o.flat, series,
+      vline: o.n_opt, vlabel: o.n_opt == null ? '' : `최적 N = ${o.n_opt}`, dot: o.n_opt == null ? null : {x: o.n_opt, y: o.total_opt, c: css('--s3')}});
+    $('o-n').textContent = o.n_opt ?? '없음'; $('o-total').textContent = fmt(o.total_opt);
+    $('o-flat').textContent = o.flat ? `${o.flat[0]} ~ ${o.flat[1]}` : '–'; $('o-ms').textContent = ms.toFixed(0);
+    $('opt-warn').style.display = o.warnings.length ? '' : 'none'; $('opt-warn').textContent = o.warnings.join(' · ');
+    curveChart($('cv-opt-curve'), o.best ? [{x: M.t, y: o.best.curve, c: css('--s3'), w: 3, label: `최적 N = ${o.n_opt}`}] : []);
+    $('opt-verify-btn').disabled = o.n_opt == null;
+    return o;
+  }
+
+  let tab = '예측';
+  const draw = () => ({'예측': drawPred, '비교': drawCmp, '검증': drawVal, '최적화': drawOpt})[tab]();
+  function changed() {      // 입력이 바뀌면 ODE 결과는 지운다(다른 입력의 결과를 보여 주지 않기 위해)
+    valRes = null; optVer = null; $('val-metrics').style.display = 'none'; $('ov-metrics').style.display = 'none';
+    $('ov-note').style.display = ''; draw();
+  }
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+    tab = b.dataset.tab;
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + tab));
+    draw();
+  }));
+
+  $('save-btn').addEventListener('click', () => {
+    const name = $('save-name').value.trim();
+    if (!name) { $('save-msg').textContent = '이름을 입력하세요.'; return; }
+    if (saved.some(s => s.name === name)) { $('save-msg').textContent = `이미 있는 이름: ${name}`; return; }
+    saved.push({name, d: Object.assign({}, design), sum: summarize(design)});
+    $('save-msg').textContent = `저장함: ${name} (비교 탭에서 확인)`; $('save-name').value = '';
+  });
+  $('cmp-table').addEventListener('click', e => { const k = e.target.dataset.del; if (k != null) { saved.splice(+k, 1); drawCmp(); } });
+
+  $('val-btn').addEventListener('click', () => {
+    const t0 = performance.now(), p = M.predict(design), t1 = performance.now(), s = M.simulate(design), t2 = performance.now();
+    valRes = s;
+    const err = Math.max(...p.curve.map((v, k) => Math.abs(v - s.ratio[k]))), d365 = p.curve[p.curve.length - 1] - s.ratio[s.ratio.length - 1];
+    $('v-max').textContent = err.toFixed(4); $('v-365').textContent = (d365 >= 0 ? '+' : '') + d365.toFixed(4);
+    $('v-cost').textContent = fmt(Math.abs(d365) * econ.p_h2 * s.m0, 1);
+    $('v-ms').textContent = `${t1 - t0 < 0.1 ? '<0.1' : (t1 - t0).toFixed(1)} / ${(t2 - t1).toFixed(1)}`;
+    $('val-metrics').style.display = ''; drawVal();
+  });
+
+  $('opt-verify-btn').addEventListener('click', () => {
+    $('ov-note').textContent = 'ODE로 계산 중…';
+    setTimeout(() => {
+      const o = M.optimize(design, econ), t0 = performance.now(); optVer = M.verifyOde(design, econ, o); const ms = performance.now() - t0;
+      $('ov-rec').textContent = optVer.n_recommended ?? '–'; $('ov-ode').textContent = optVer.n_ode ?? '–';
+      $('ov-err').textContent = optVer.rel_cost_err == null ? '–' : (optVer.rel_cost_err * 100).toFixed(2);
+      $('ov-ms').textContent = fmt(ms);
+      $('ov-note').style.display = 'none'; $('ov-metrics').style.display = ''; drawOpt();
+      $('ov-note').textContent = '대리모델 상위 후보 5개와 적층수 10~120층 전체를 ODE로 다시 계산합니다(1초 안팎).';
+    }, 20);
+  });
+
+  addEventListener('resize', draw);
+  draw();
+})();
+</script>
+</body>
+</html>

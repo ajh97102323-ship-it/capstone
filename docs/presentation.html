@@ -164,7 +164,7 @@ body.show-notes #notes { display: block; }
       </div>
     </div>
   </div>
-  <div class="foot"><span id="demo-meta">브라우저 안에서 계산 · 서버 없음</span><span></span></div>
+  <div class="foot"><span id="demo-meta">브라우저 안에서 계산 · 서버 없음</span><span>전체 화면 시연(4개 탭): demo.html</span></div>
 </section>
 
 <!-- 03 시연 ② -->
@@ -513,7 +513,32 @@ addEventListener('resize', fit); fit(); show(i);
       return res;
     }
 
-    return { names, lo: M.lo, hi: M.hi, log: names.map(k => logs.has(k)), t, predict, simulate, costs, optimize, checkRange, meta: D.meta };
+    // optimize.verify_with_ode: 대리모델 상위 후보 topK개 + N 전 범위를 ODE로 다시 계산한다(헌법 I)
+    function verifyOde(design, econ, opt, topK = 5) {
+      const scan = opt.N.map(n => {
+        const d = Object.assign({}, design, { N: n }), s = simulate(d), r = s.ratio[s.ratio.length - 1];
+        return Object.assign({ N: n, depleted: s.tEmpty !== null || r <= 0, ratio: s.ratio }, costs(d, econ, n, r));
+      });
+      const byN = n => scan[n - opt.N[0]];
+      const candidates = opt.rows.filter(r => !r.depleted).slice().sort((a, b) => a.annual_total - b.annual_total)
+        .slice(0, topK).map(r => r.N);
+      const candidate_totals_ode = candidates.map(n => byN(n).annual_total);
+      const live = candidates.filter(n => !byN(n).depleted);
+      const n_recommended = live.length ? live.reduce((a, b) => byN(b).annual_total < byN(a).annual_total ? b : a) : null;
+      const ok = scan.filter(r => !r.depleted);
+      const best = ok.length ? ok.reduce((a, b) => b.annual_total < a.annual_total ? b : a) : null;
+      const res = { scan, candidates, candidate_totals_ode, n_recommended, n_sur: opt.n_opt,
+        n_ode: best ? best.N : null, total_ode: best ? best.annual_total : null, total_ode_at_sur: null, rel_cost_err: null, dN: null };
+      if (opt.n_opt != null && best) {
+        res.total_ode_at_sur = byN(opt.n_opt).annual_total;
+        res.rel_cost_err = (res.total_ode_at_sur - best.annual_total) / best.annual_total;
+        res.dN = opt.n_opt - best.N;
+      }
+      return res;
+    }
+
+    return { names, lo: M.lo, hi: M.hi, log: names.map(k => logs.has(k)), t, predict, simulate, costs, optimize, verifyOde, checkRange,
+      constants: { H_FG: C.H_FG, DAY: C.DAY, DEPLETION_TOL: O.DEPLETION_TOL }, meta: D.meta };
   }
 
   const api = { create };
