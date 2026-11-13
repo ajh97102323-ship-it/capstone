@@ -1,0 +1,8 @@
+{
+  "name": "lh2-kit",
+  "description": "액화수소 탱크 단열 설계 대리모델 캡스톤의 builder/verifier 에이전트, 생성물 보호 훅, 파이프라인 실행·보고서 배포 스킬",
+  "version": "0.1.0",
+  "author": {"name": "JH"},
+  "repository": "https://github.com/ajh97102323-ship-it/capstone",
+  "keywords": ["capstone", "surrogate", "lh2", "spec-kit"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "lh2-capstone",
+  "owner": {"name": "JH"},
+  "description": "LH2 단열 설계 캡스톤 Claude Code 플러그인 목록",
+  "plugins": [
+    {
+      "name": "lh2-kit",
+      "source": "./plugins/lh2-kit",
+      "description": "builder/verifier 에이전트, 생성물 보호 훅, 파이프라인 실행·보고서 배포 스킬"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+# Vercel에는 정적 보고서(docs/)만 올린다. Python 코드·데이터·모델은 빌드에 필요 없다.
+/*
+!docs
+!vercel.json
