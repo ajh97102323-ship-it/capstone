@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LH2 단열 설계 캡스톤 발표</title>
+<style>
+:root {
+  --bg: #e9e8e4; --paper: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #85837d; --line: #e3e2de;
+  --accent: #2a78d6; --accent-2: #eb6834; --soft: #f1f0ec; --hi-bg: #eaf2fc;
+  --ok: #1a7f37; --bad: #b42318;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+  font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif; }
+#stage { position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden; }
+.slide { position: absolute; width: 1280px; height: 720px; background: var(--paper); padding: 56px 72px 64px;
+  display: none; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,.12); transform-origin: center center; }
+.slide.on { display: flex; }
+.kicker { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+h1 { font-size: 44px; margin: 6px 0 0; line-height: 1.25; letter-spacing: -0.02em; }
+h2 { font-size: 34px; margin: 6px 0 22px; letter-spacing: -0.02em; }
+.lead { font-size: 21px; color: var(--ink-2); line-height: 1.6; margin: 0; }
+.rule { border: 0; border-top: 2px solid var(--ink); margin: 18px 0 26px; }
+.foot { position: absolute; left: 72px; right: 72px; bottom: 24px; display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--muted); }
+.grid { display: grid; gap: 18px; }
+.g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); }
+.card { border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; background: #fff; }
+.card h3 { margin: 0 0 8px; font-size: 19px; }
+.card p, .card li { font-size: 16px; color: var(--ink-2); line-height: 1.55; margin: 0; }
+.card ul { margin: 0; padding-left: 18px; }
+.tag { display: inline-block; font-size: 13px; font-weight: 700; padding: 2px 9px; border-radius: 6px; margin-right: 6px; }
+.t-agent { background: #eaf2fc; color: #1d5fae; } .t-skill { background: #e6f6ef; color: #12795a; }
+.t-hook { background: #fdeee6; color: #b4471b; } .t-deny { background: #fde8e6; color: var(--bad); }
+.t-ask { background: #fff4dc; color: #8a5a00; }
+table { width: 100%; border-collapse: collapse; font-size: 17px; }
+th, td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.45; }
+th { font-size: 14px; color: var(--muted); font-weight: 600; }
+td.k { white-space: nowrap; font-weight: 700; }
+table.rules td { padding: 7px 6px; } table.rules td:nth-child(2) { white-space: nowrap; }
+td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.flow { display: flex; align-items: stretch; gap: 10px; }
+.flow .step { flex: 1; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #fff; text-align: center; }
+.flow .step b { display: block; font-size: 17px; } .flow .step span { font-size: 13px; color: var(--muted); }
+.flow .arrow { align-self: center; color: var(--muted); font-size: 22px; }
+.hi { background: var(--hi-bg); border-radius: 10px; padding: 14px 18px; font-size: 18px; line-height: 1.55; }
+code { font-family: Consolas, monospace; font-size: .92em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+.cmd { font-family: Consolas, monospace; font-size: 15px; background: #111; color: #e8e8e3; border-radius: 8px; padding: 12px 16px; line-height: 1.6; white-space: pre; }
+/* ---- 시연 ---- */
+.demo { display: grid; grid-template-columns: 360px 1fr; gap: 20px; flex: 1; min-height: 0; }
+.ctl { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px 14px; overflow: hidden; }
+.ctl .row { display: grid; grid-template-columns: 1fr 92px; gap: 2px 8px; align-items: center; margin: 6px 0; }
+.ctl label { font-size: 13px; color: var(--ink-2); grid-column: 1 / 3; display: flex; justify-content: space-between; }
+.ctl label small { color: var(--muted); }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+.ctl input[type=number] { width: 92px; font: inherit; font-size: 13px; padding: 2px 4px; border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+.ctl h4 { margin: 2px 0 4px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.right { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.chartbox { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 8px; flex: 1; min-height: 0; position: relative; }
+.chartbox canvas { width: 100%; height: 100%; display: block; }
+.metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.m { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 8px 10px; }
+.m .k { font-size: 12px; color: var(--ink-2); } .m .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.m.hl { border-color: var(--accent); background: var(--hi-bg); }
+.btn { font: inherit; font-size: 15px; font-weight: 700; background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+.warn { font-size: 13px; color: #8a5a00; background: #fff4dc; border-radius: 8px; padding: 6px 10px; }
+.legend { position: absolute; top: 10px; right: 14px; display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 16px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+#nav { position: fixed; bottom: 12px; right: 16px; display: flex; gap: 6px; align-items: center; font-size: 13px; color: #555; z-index: 5; }
+#nav button { border: 1px solid #ccc; background: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; }
+#notes { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(20,20,20,.92); color: #f3f3f0; font-size: 15px;
+  line-height: 1.6; padding: 12px 20px 44px; display: none; z-index: 4; }
+body.show-notes #notes { display: block; }
+@media print {
+  html, body { background: #fff; height: auto; }
+  #stage { position: static; display: block; }
+  .slide { display: flex !important; position: relative; transform: none !important; box-shadow: none; page-break-after: always; }
+  #nav, #notes { display: none !important; }
+  @page { size: 1280px 720px; margin: 0; }
+}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- 표지 -->
+<section class="slide" data-notes="한 문장: 액화수소 탱크 단열 설계 대리모델을 명세(승인 기준) → 에이전트(builder/verifier) → 보호 장치(deny·훅) 흐름으로 만들었습니다.">
+  <div class="kicker">캡스톤 발표</div>
+  <h1 style="margin-top:120px">액화수소 탱크 단열 설계 대리모델<br>명세 · 보호 장치 · 에이전트로 만들기</h1>
+  <hr class="rule" style="width:420px">
+  <p class="lead">무엇을 만들었는지보다, <b>어떤 승인 기준을 세우고, 무엇을 막고, 어떤 에이전트에게 맡겼는지.</b></p>
+  <div style="margin-top:auto; display:flex; gap:28px; font-size:15px; color:var(--ink-2)">
+    <span>01 문제</span><span>02 구조</span><span>03 시연</span><span>04 Spec 승인 기준</span><span>05 deny와 훅</span><span>06 에이전트</span>
+  </div>
+  <div class="foot"><span>github.com/ajh97102323-ship-it/capstone</span><span>→ 키 / 클릭으로 넘김 · N 키 발표 메모</span></div>
+</section>
+
+<!-- 01 문제 -->
+<section class="slide" data-notes="반복 업무: 단열 사양을 바꿀 때마다 1년 보일오프 ODE를 다시 풀고 비용표를 다시 만든다. 질문은 'MLI를 몇 겹 감아야 가장 싼가'.">
+  <div class="kicker">01 · 문제</div>
+  <h2>단열 사양이 바뀔 때마다 계산을 처음부터 다시 한다</h2>
+  <div class="grid g3">
+    <div class="card"><h3>반복되는 일</h3><p>적층수·진공압·탱크 크기를 바꿀 때마다 1년 보일오프 ODE를 다시 풀고, 비용표를 손으로 다시 만든다.</p></div>
+    <div class="card"><h3>바뀌는 조건</h3><p>수소 가격, 층당 시공비, 수명, 할인율. 조건이 바뀌면 최적 적층수도 바뀐다.</p></div>
+    <div class="card"><h3>알고 싶은 것</h3><p>MLI를 몇 겹 감아야 <b>(적층 비용 + 보일오프 손실)</b>이 가장 싼가. 그 답을 믿어도 되는가.</p></div>
+  </div>
+  <div class="hi" style="margin-top:26px">목표: 설계 변수 10개 → 0~365일 잔량 곡선을 즉시 예측하는 대리모델을 만들고,
+    그 모델로 비용 최적화를 한다. <b>기준은 언제나 물리 모델(ODE)</b>이고, 대리모델 결과는 ODE로 다시 확인한다.</div>
+  <div class="foot"><span>공개 문헌 수준의 간이 물리 모델(Lockheed MLI 식, 캡슐 탱크) · 실제 사내 데이터 없음</span><span></span></div>
+</section>
+
+<!-- 02 구조 -->
+<section class="slide" data-notes="5단계 파이프라인. 각 단계는 Spec Kit 명세로 시작하고, 만드는 쪽과 의심하는 쪽을 나눴고, deny와 훅이 생성물을 지킨다. 전부 lh2-kit 플러그인으로 묶었다.">
+  <div class="kicker">02 · 구조</div>
+  <h2>명세 → 구현(builder) → 반례 찾기(verifier) → 훅이 지키는 생성물</h2>
+  <div class="flow">
+    <div class="step"><b>physics/</b><span>ODE·비용 모델<br>유일한 정답 기준</span></div><div class="arrow">→</div>
+    <div class="step"><b>data/</b><span>LHS 샘플링<br>데이터셋 생성</span></div><div class="arrow">→</div>
+    <div class="step"><b>surrogate/</b><span>MLP 대리모델<br>Optuna 탐색</span></div><div class="arrow">→</div>
+    <div class="step"><b>optimize/</b><span>적층수·L/D 최적화<br>ODE 재검증</span></div><div class="arrow">→</div>
+    <div class="step"><b>app/</b><span>Streamlit<br>4개 탭</span></div>
+  </div>
+  <div class="grid g3" style="margin-top:22px">
+    <div class="card"><p style="margin-bottom:6px"><span class="tag t-skill">스킬</span></p>
+      <p><b>speckit-*</b> 명세·계획·작업 목록 (한국어 번역)<br><b>run-pipeline</b> · <b>publish-report</b></p></div>
+    <div class="card"><p style="margin-bottom:6px"><span class="tag t-agent">에이전트</span></p>
+      <p><b>builder</b> 테스트 먼저 구현<br><b>verifier</b> 읽기 전용, 반례만 찾음</p></div>
+    <div class="card"><p style="margin-bottom:6px"><span class="tag t-hook">deny · 훅</span></p>
+      <p><code>settings.json</code> deny/ask 규칙<br><code>guard_protected.py</code> PreToolUse 훅</p></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <h3>기능마다 같은 흐름 (000 물리 → 001 데이터 → 002 학습 → 003 최적화 → 004 UI)</h3>
+    <div class="flow" style="margin-top:10px">
+      <div class="step"><b>specify</b><span>spec.md<br>승인 기준(SC)</span></div><div class="arrow">→</div>
+      <div class="step"><b>plan · tasks</b><span>헌법 점검<br>작업 목록</span></div><div class="arrow">→</div>
+      <div class="step"><b>builder</b><span>테스트 먼저<br>재현 명령 보고</span></div><div class="arrow">→</div>
+      <div class="step"><b>verifier</b><span>반례·변이 확인<br>반려 최대 2회</span></div><div class="arrow">→</div>
+      <div class="step"><b>사람</b><span>직접 재현 후<br>tasks.md [X]</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>묶음: <code>plugins/lh2-kit</code> · claude plugin validate 통과</span><span></span></div>
+</section>
+
+<!-- 03 시연 ① -->
+<section class="slide" id="demo1" data-notes="이 장은 진짜로 계산한다. 서버 없이 브라우저 안에서 학습된 대리모델(MLP)이 돈다. 적층수를 40→90으로 바꾸면 곡선이 올라가고 보일오프 비용이 준다. 'ODE로 검증'을 누르면 물리 모델을 브라우저에서 풀어 겹쳐 보여 준다.">
+  <div class="kicker">03 · 시연 ① 설계 입력 → 잔량 곡선, ODE로 검증</div>
+  <h2 style="margin-bottom:14px">슬라이더를 움직이면 학습된 대리모델이 바로 다시 예측한다</h2>
+  <div class="demo">
+    <div class="ctl"><h4>설계 입력 (학습 범위로 제한, 값 직접 입력 가능)</h4><div id="design-ctl"></div></div>
+    <div class="right">
+      <div class="chartbox"><canvas id="cv-curve"></canvas>
+        <div class="legend"><span><i style="background:var(--accent)"></i>AI 대리모델</span><span id="lg-ode" style="display:none"><i style="background:var(--accent-2)"></i>ODE (물리 모델)</span></div></div>
+      <div class="metrics">
+        <div class="m"><div class="k">초기 열유입 [W]</div><div class="v" id="m-q0">–</div></div>
+        <div class="m"><div class="k">180일 후 잔량비 [-]</div><div class="v" id="m-r180">–</div></div>
+        <div class="m"><div class="k">소진 시점 [day]</div><div class="v" id="m-empty">–</div></div>
+        <div class="m"><div class="k">보일오프 비용 [$/yr]</div><div class="v" id="m-boil">–</div></div>
+        <div class="m"><div class="k">연간 총비용 [$/yr]</div><div class="v" id="m-total">–</div></div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center">
+        <button class="btn" id="btn-ode">ODE로 검증</button>
+        <span id="ode-out" style="font-size:15px; color:var(--ink-2)">버튼을 누르면 같은 입력을 물리 모델(ODE)로 풀어 겹쳐 보여 줍니다.</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span id="demo-meta">브라우저 안에서 계산 · 서버 없음</span><span></span></div>
+</section>
+
+<!-- 03 시연 ② -->
+<section class="slide" id="demo2" data-notes="경제 변수는 모델 입력이 아니라 후처리라 재학습 없이 바로 바뀐다. 수소 가격을 5→10으로 올리면 최적 적층수가 오른쪽으로 이동한다. 층당 단가를 올리면 왼쪽으로. 회색 띠는 최소 비용의 1% 이내 구간.">
+  <div class="kicker">03 · 시연 ② 경제 조건 → 최적 적층수</div>
+  <h2 style="margin-bottom:14px">수소 가격을 올리면 최적 적층수가 바로 움직인다</h2>
+  <div class="demo">
+    <div class="ctl"><h4>경제 변수 (대리모델 입력 아님, 후처리)</h4><div id="econ-ctl"></div>
+      <p style="font-size:12px; color:var(--muted); margin:10px 0 0">설계 입력은 시연 ①의 값을 그대로 씁니다. 적층수 10~120층 111개를 대리모델로 한꺼번에 예측합니다.</p></div>
+    <div class="right">
+      <div class="chartbox"><canvas id="cv-cost"></canvas>
+        <div class="legend"><span><i style="background:var(--accent)"></i>MLI 비용</span><span><i style="background:var(--accent-2)"></i>보일오프 비용</span><span><i style="background:#1baf7a"></i>총비용</span></div></div>
+      <div class="metrics" style="grid-template-columns: repeat(4, 1fr)">
+        <div class="m hl"><div class="k">최적 적층수 [layer]</div><div class="v" id="o-n">–</div></div>
+        <div class="m"><div class="k">최적 총비용 [$/yr]</div><div class="v" id="o-total">–</div></div>
+        <div class="m"><div class="k">평평한 구간 (+1%) [layer]</div><div class="v" id="o-flat">–</div></div>
+        <div class="m"><div class="k">계산 시간 [ms]</div><div class="v" id="o-ms">–</div></div>
+      </div>
+      <div class="warn" id="o-warn" style="display:none"></div>
+    </div>
+  </div>
+  <div class="foot"><span>총비용 = (층당 단가 × N + 고정비) × MLI 면적 × 자본회수계수 + 수소 가격 × 초기 질량 × (1 − 365일 잔량비)</span><span></span></div>
+</section>
+
+<!-- 03 Spec 승인 기준 -->
+<section class="slide" data-notes="기능 다섯 개마다 spec.md에 측정 가능한 승인 기준(Success Criteria)을 먼저 적었다. 숫자로 판정할 수 있게: R² 0.99, ±2층, 1초. 기준마다 pytest가 있다.">
+  <div class="kicker">04 · Spec 승인 기준</div>
+  <h2>기능마다 숫자로 판정하는 승인 기준을 먼저 적었다</h2>
+  <table>
+    <tr><th>기능</th><th>핵심 승인 기준 (spec.md Success Criteria)</th><th style="text-align:right">기준 / 요구사항</th></tr>
+    <tr><td class="k">000 물리·비용</td><td>PLAN 2.4 체크리스트 자동 테스트 통과 · 질량 보존 오차 0.1% 이내 · 최적 N이 근사식과 12% 이내</td><td class="n">SC 5 · FR 12</td></tr>
+    <tr><td class="k">001 데이터셋</td><td>1만 개 10분 이내 · 유효 샘플 99% 이상 · 재계산 차이 1e-6 이하 · 같은 시드면 100% 동일 · 분할 70/15/15</td><td class="n">SC 8 · FR 21</td></tr>
+    <tr><td class="k">002 대리모델</td><td>테스트 R² ≥ 0.99 · 365일 잔량비 평균 오차 ≤ 0.005, 최대 ≤ 0.03 · ODE보다 100배 빠름 · 항상 0~1·단조 감소</td><td class="n">SC 6 · FR 16</td></tr>
+    <tr><td class="k">003 최적화</td><td>설계 20개에서 최적 N이 ODE와 ±2층 · 그 N의 ODE 총비용이 최적보다 1% 이내 · 경제 변수 변경 후 1초</td><td class="n">SC 5 · FR 15</td></tr>
+    <tr><td class="k">004 웹 UI</td><td>입력 변경 후 1초 갱신 · 5명 동시 접속 · 4개 탭 동작 · 사용자 간 저장 설계안 노출 0건</td><td class="n">SC 6 · FR 14</td></tr>
+  </table>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="hi">수용 시나리오(Given–When–Then)는 각 <code>specs/00x/spec.md</code>. 헌법(<code>constitution.md</code>)이 모든 명세보다 우선.</div>
+    <div class="hi">기준마다 pytest — <b>테스트 467개</b>, 21개 파일. 테스트가 실패한 상태로 다음 단계로 가지 않는다.</div>
+  </div>
+  <div class="foot"><span>테스트 수: data 197 · optimize 102 · surrogate 82 · app 37 · physics 36 · cost 11 · report 2</span><span></span></div>
+</section>
+
+<!-- 04 deny와 훅 -->
+<section class="slide" data-notes="생성물(데이터셋·모델·보고서)은 스크립트로만 다시 만든다. 손으로 R²나 지표를 고칠 수 없게 deny. physics는 바꾸면 데이터 1만 개와 모델이 무효라 ask. 권한 규칙이 경로 표기에 따라 빠질 수 있어서 훅이 실제 경로를 계산해 한 번 더 막는다.">
+  <div class="kicker">05 · deny와 훅</div>
+  <h2>생성물은 스크립트로만, 물리 모델은 확인 후에만</h2>
+  <div class="grid" style="grid-template-columns: 1.3fr 1fr">
+    <div class="card">
+      <h3>권한 규칙 <code>.claude/settings.json</code></h3>
+      <table class="rules" style="font-size:15px">
+        <tr><td><span class="tag t-deny">deny</span></td><td><code>Edit(/reports/**)</code></td><td>지표 JSON·보고서 손으로 수정 금지</td></tr>
+        <tr><td><span class="tag t-deny">deny</span></td><td><code>Edit(/models/**)</code></td><td>학습 결과물은 학습 스크립트로만</td></tr>
+        <tr><td><span class="tag t-deny">deny</span></td><td><code>Edit(/data/datasets/**)</code></td><td>데이터셋은 <code>data.generate</code>로만</td></tr>
+        <tr><td><span class="tag t-deny">deny</span></td><td><code>rm -rf</code> · <code>Remove-Item -Recurse</code></td><td>일괄 삭제 방지</td></tr>
+        <tr><td><span class="tag t-ask">ask</span></td><td><code>Edit(/physics/**)</code></td><td>바뀌면 데이터·모델 전부 무효</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>백업 훅 <code>guard_protected.py</code> (PreToolUse)</h3>
+      <ul>
+        <li>규칙은 경로 표기(대소문자, <code>\</code>·<code>/</code>, <code>..</code>)에 따라 빠질 수 있다 → <b>실제 경로를 계산</b>해 다시 판정</li>
+        <li>셸 명령이 <code>physics/</code>에 쓰는지 감지: 리다이렉트, <code>Set-Content</code>, <code>cp/mv</code> 대상, python <code>open(...,'w')</code></li>
+        <li>재귀 삭제 변형까지 차단: <code>rm -fr</code>, <code>-R</code>, <code>rmdir /s</code>, <code>shutil.rmtree</code></li>
+        <li>입력을 못 읽으면 통과가 아니라 <b>차단</b>(fail-closed)</li>
+        <li>못 잡는 것도 명시: 스크립트 파일 안·변수로 만든 경로</li>
+      </ul>
+    </div>
+  </div>
+  <div class="hi" style="margin-top:18px">실제로 동작했다: 샌드박스가 스크립트의 <code>models/</code>·<code>data/datasets/</code> 쓰기까지 막아, 생성물은 명시적으로 승인한 스크립트 실행으로만 만들어졌다.
+    훅은 입력 JSON을 넣어 판정을 시험(models 쓰기 → deny, physics 수정 → ask, app 수정 → 통과).</div>
+  <div class="foot"><span>테스트·시험 생성은 생성물 폴더가 아니라 tmp_path로 출력 · 메모리 안 변이 확인은 막지 않음</span><span></span></div>
+</section>
+
+<!-- 05 에이전트 -->
+<section class="slide" data-notes="두 에이전트는 도구 권한이 다르다. verifier에는 Edit·Write가 없다. verifier에게는 작업 ID·파일·명령만 넘기고 builder의 '통과했다'는 넘기지 않는다. 반려는 2회까지, 그다음은 사람이 결정.">
+  <div class="kicker">06 · 에이전트</div>
+  <h2>만드는 에이전트와 의심하는 에이전트를 나눴다</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3><span class="tag t-agent">builder</span> 구현 담당</h3>
+      <p style="margin-bottom:8px"><b>도구</b> Read · Grep · Glob · <b>Edit · Write</b> · Bash · PowerShell</p>
+      <ul>
+        <li>tasks.md의 지정 작업만 (한 번에 한 Phase)</li>
+        <li>테스트를 먼저 쓰고 <b>실패를 확인</b>한 뒤 구현</li>
+        <li>"완료" 대신 재현 명령·바뀐 파일·남긴 이슈로 보고</li>
+        <li>훅·권한에 막히면 우회하지 않고 보고</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag t-agent">verifier</span> 검증 담당 (읽기 전용)</h3>
+      <p style="margin-bottom:8px"><b>도구</b> Read · Grep · Glob · Bash · PowerShell — <b>Edit·Write 없음</b></p>
+      <ul>
+        <li>맞다는 증거가 아니라 <b>반례</b>를 찾는다</li>
+        <li>작업 ID·파일·명령만 받는다 — builder의 결론은 받지 않음</li>
+        <li><b>변이 확인</b>: 함수를 메모리에서 틀리게 바꿔 테스트가 잡는지</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card"><h3>반려 규칙</h3><p>작업마다 2회까지. 두 번 반려되면 builder에게 다시 보내지 않고 사람이 결정.</p></div>
+    <div class="card"><h3>완료 표시</h3><p>tasks.md의 <code>[X]</code>는 verifier가 반례를 못 찾고, 메인 세션이 직접 재현한 작업에만.</p></div>
+    <div class="card"><h3>운영</h3><p>서브에이전트는 sonnet. 같은 파일을 두 builder가 동시에 고치지 않게 작업을 나눔.</p></div>
+  </div>
+  <div class="foot"><span>.claude/agents/builder.md · verifier.md (lh2-kit 플러그인에 포함)</span><span></span></div>
+</section>
+
+<!-- 05 에이전트: 실제로 잡은 것 -->
+<section class="slide" data-notes="verifier가 실제로 잡은 것. 003에서 결과 파일에 물리 버전이 없어 반려 1회, 고쳐서 통과. NaN 처리, inf 가격도 같이 보완. 002에서는 망가진 모델도 일부 테스트를 통과하는 공백을 찾았다. 003 후반과 004는 일정 때문에 verifier를 생략했고, 대신 메인 세션이 전체 테스트와 브라우저로 확인했다.">
+  <div class="kicker">06 · 에이전트 (계속)</div>
+  <h2>verifier가 실제로 잡은 것</h2>
+  <table>
+    <tr><th>작업</th><th>반례 / 변이 확인</th><th>처리</th></tr>
+    <tr><td class="k">002 T001~T011</td><td>변이 7개(후처리 제거, 범위 검사 무력화, log 변환 제거 등)를 테스트가 잡음. 출력층 +0.05 변이는 <b>train·evaluate 테스트만으로는 통과</b> (테스트 공백)</td><td>전체 스위트로는 잡힘 · 공백 기록, 완료 표시</td></tr>
+    <tr><td class="k">003 T001~T006</td><td>결과 파일에 <b>물리 모델 버전 없음</b> (헌법 V 위반)</td><td><b>반려 1회</b> → 물리 지문·모델·설정 기록 + 테스트</td></tr>
+    <tr><td class="k">003 T001~T006</td><td>대리모델이 NaN을 내면 최적화가 그 칸을 골라 죽음 · 무한대 가격 입력 통과</td><td>NaN 후보 제외·경고, inf 거부 + 테스트</td></tr>
+    <tr><td class="k">003 T001~T006</td><td>변이 6개(비용 ×1.05, 소진 기준 0, 평탄 구간 0.5 등) 모두 테스트가 잡음</td><td>보완 후 완료 표시</td></tr>
+    <tr><td class="k">003 후반 · 004</td><td>일정 때문에 사람이 <b>verifier 생략</b>을 결정</td><td>메인 세션이 전체 테스트(467) 재현 + 브라우저로 직접 조작</td></tr>
+  </table>
+  <div class="hi" style="margin-top:20px">배운 것: builder의 "통과했습니다"는 출발점일 뿐이다. <b>결론을 넘기지 않은 verifier</b>와 <b>직접 다시 돌려 보는 사람</b>이 있어야 틀린 곳이 보인다.</div>
+  <div class="foot"><span>specs/002·003·004 tasks.md에 결과와 생략 사실 기록</span><span></span></div>
+</section>
+
+<!-- 끝 -->
+<section class="slide" data-notes="질문 받기.">
+  <div class="kicker">질의응답</div>
+  <h1 style="margin-top:150px">감사합니다</h1>
+  <hr class="rule" style="width:420px">
+  <p class="lead">저장소 github.com/ajh97102323-ship-it/capstone<br>명세 <code>specs/000~004</code> · 헌법 <code>.specify/memory/constitution.md</code> · 플러그인 <code>plugins/lh2-kit</code></p>
+  <div class="foot"><span>LH2 단열 설계 캡스톤</span><span></span></div>
+</section>
+
+</div>
+<div id="notes"></div>
+<div id="nav"><button id="prev" aria-label="이전">←</button><span id="pos"></span><button id="next" aria-label="다음">→</button><button id="nb" aria-label="발표 메모">메모</button></div>
+<script>
+const slides = [...document.querySelectorAll('.slide')];
+let i = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1)) || 1) - 1));
+function fit() {
+  const s = Math.min(innerWidth / 1280, innerHeight / 720) * 0.96;
+  slides.forEach(el => el.style.transform = `scale(${s})`);
+}
+function show(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((el, k) => el.classList.toggle('on', k === i));
+  document.getElementById('pos').textContent = `${i + 1} / ${slides.length}`;
+  document.getElementById('notes').textContent = '발표 메모: ' + (slides[i].dataset.notes || '');
+  try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) { /* 미리 보기 서비스 안에서는 주소 변경 불가 */ }
+}
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input, button, select, textarea')) return;   // 시연 입력 중에는 넘기지 않음
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+  else if (e.key === 'Home') show(0); else if (e.key === 'End') show(slides.length - 1);
+  else if (e.key.toLowerCase() === 'n') document.body.classList.toggle('show-notes');
+  else if (e.key.toLowerCase() === 'f') document.documentElement.requestFullscreen?.();
+});
+document.getElementById('prev').onclick = () => show(i - 1);
+document.getElementById('next').onclick = () => show(i + 1);
+document.getElementById('nb').onclick = () => document.body.classList.toggle('show-notes');
+document.getElementById('stage').addEventListener('click', e => { if (!e.target.closest('a,button,.demo,.ctl')) show(i + (e.clientX > innerWidth / 3 ? 1 : -1)); });
+addEventListener('resize', fit); fit(); show(i);
+</script>
+<script id="demo-data" type="application/json">__DEMO_DATA__</script>
+<script>
+/*__DEMO_CORE__*/
+</script>
+<script>
+// ---------------- 시연 화면 ----------------
+(function () {
+  const $ = id => document.getElementById(id);
+  let M;
+  try { M = LH2.create(JSON.parse($('demo-data').textContent)); }
+  catch (e) { $('demo-meta').textContent = '시연 데이터를 불러오지 못했습니다: ' + e.message; return; }
+  const fmt = (x, d = 0) => x == null || !Number.isFinite(x) ? '–' : x.toLocaleString('ko-KR', {minimumFractionDigits: d, maximumFractionDigits: d});
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const LABEL = {N: ['MLI 적층수 N', 'layer'], Nbar: ['적층밀도 N̄', 'layer/cm'], eps: ['실드 방사율 ε', '-'], G_sup: ['지지구조 컨덕턴스', 'W/K'],
+    Pv0: ['초기 진공압', 'Pa'], G_out: ['아웃개싱', 'Pa·m³/s'], S: ['게터 배기속도', 'm³/s'], R: ['탱크 반경 R', 'm'], LD: ['실린더 길이비 L/D', '-'], fill: ['초기 충전율', '-']};
+  const design = {N: 40, Nbar: 20, eps: 0.03, G_sup: 1e-3, Pv0: 1e-3, G_out: 1e-8, S: 1e-3, R: 1.5, LD: 1.0, fill: 0.9};
+  const econ = {c_layer: 10, c_fixed: 50, p_h2: 5, life_years: 20, discount: 0.05};
+  const ECON_UI = [['p_h2', '수소 가격 p_H2', '$/kg', 2, 15, 0.5], ['c_layer', '층당 단가 c_layer', '$/(m²·layer)', 5, 30, 0.5],
+    ['c_fixed', 'MLI 고정비', '$/m²', 0, 200, 5], ['life_years', '수명', 'yr', 5, 40, 1], ['discount', '할인율', '-', 0, 0.15, 0.005]];
+  let ode = null;   // 현재 입력에 대한 ODE 결과 (입력이 바뀌면 지움)
+
+  const show = v => Math.abs(v) >= 1e4 || (Math.abs(v) < 1e-2 && v !== 0) ? v.toExponential(2) : (+v.toPrecision(4)).toString();
+  function addRow(box, key, label, unit, lo, hi, step, log, get, set) {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<label>${label} <small>[${unit}] ${show(lo)} ~ ${show(hi)}</small></label><input type="range"><input type="number">`;
+    const [rg, nb] = row.querySelectorAll('input');
+    const toR = v => log ? Math.log10(v) : v, fromR = r => log ? Math.pow(10, r) : r;
+    rg.min = toR(lo); rg.max = toR(hi); rg.step = log ? (toR(hi) - toR(lo)) / 100 : step;
+    nb.min = lo; nb.max = hi; nb.step = log ? 'any' : step;
+    const sync = () => { rg.value = toR(get()); nb.value = show(get()); };
+    rg.addEventListener('input', () => { set(+fromR(+rg.value).toPrecision(4)); nb.value = show(get()); update(); });
+    nb.addEventListener('change', () => { let v = +nb.value; if (!Number.isFinite(v)) v = get(); v = Math.min(hi, Math.max(lo, v)); set(v); sync(); update(); });
+    sync(); box.appendChild(row);
+  }
+  M.names.forEach((k, j) => addRow($('design-ctl'), k, LABEL[k][0], LABEL[k][1], M.lo[j], M.hi[j], k === 'N' ? 1 : (M.hi[j] - M.lo[j]) / 100,
+    M.log[j], () => design[k], v => { design[k] = k === 'N' ? Math.round(v) : v; }));
+  ECON_UI.forEach(([k, label, unit, lo, hi, step]) => addRow($('econ-ctl'), k, label, unit, lo, hi, step, false, () => econ[k], v => { econ[k] = v; }));
+
+  // ---- 작은 선 그래프 (외부 라이브러리 없이) ----
+  function chart(cv, o) {
+    const r = cv.getBoundingClientRect(), dpr = 2, W = cv.offsetWidth, H = cv.offsetHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, W, H);
+    const pad = {l: 64, r: 16, t: 34, b: 40}, pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    const X = x => pad.l + (x - o.x0) / (o.x1 - o.x0) * pw, Y = y => pad.t + (1 - (y - o.y0) / (o.y1 - o.y0)) * ph;
+    g.font = "12px 'Malgun Gothic', sans-serif"; g.fillStyle = css('--muted'); g.strokeStyle = '#ecebe7'; g.lineWidth = 1;
+    o.yt.forEach(v => { g.beginPath(); g.moveTo(pad.l, Y(v)); g.lineTo(pad.l + pw, Y(v)); g.stroke(); g.textAlign = 'right'; g.fillText(o.yf(v), pad.l - 6, Y(v) + 4); });
+    o.xt.forEach(v => { g.textAlign = 'center'; g.fillText(o.xf ? o.xf(v) : v, X(v), pad.t + ph + 16); });
+    g.fillStyle = css('--ink-2'); g.textAlign = 'center'; g.fillText(o.xl, pad.l + pw / 2, H - 6);
+    g.save(); g.translate(14, pad.t + ph / 2); g.rotate(-Math.PI / 2); g.fillText(o.yl, 0, 0); g.restore();
+    if (o.band) { g.fillStyle = 'rgba(133,131,125,.15)'; g.fillRect(X(o.band[0]), pad.t, X(o.band[1]) - X(o.band[0]), ph); }
+    g.save(); g.beginPath(); g.rect(pad.l, pad.t, pw, ph); g.clip();
+    o.series.forEach(s => {
+      g.strokeStyle = s.c; g.lineWidth = s.w || 2.5; g.setLineDash(s.dash || []); g.beginPath();
+      let pen = false;
+      s.x.forEach((x, k) => { const y = s.y[k]; if (y == null || !Number.isFinite(y)) { pen = false; return; }
+        if (pen) g.lineTo(X(x), Y(y)); else { g.moveTo(X(x), Y(y)); pen = true; } });
+      g.stroke();
+    });
+    g.restore(); g.setLineDash([]);
+    if (o.vline != null) {
+      g.strokeStyle = css('--ink'); g.lineWidth = 1.5; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(X(o.vline), pad.t); g.lineTo(X(o.vline), pad.t + ph); g.stroke(); g.setLineDash([]);
+      g.fillStyle = css('--ink'); g.textAlign = 'center'; g.font = "bold 13px 'Malgun Gothic', sans-serif"; g.fillText(o.vlabel, X(o.vline), pad.t - 8);
+    }
+    if (o.dot) { g.fillStyle = o.dot.c; g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(X(o.dot.x), Y(o.dot.y), 6, 0, 7); g.fill(); g.stroke(); }
+  }
+  const niceMax = v => { const p = Math.pow(10, Math.floor(Math.log10(v))); return Math.ceil(v / p * 2) / 2 * p; };
+  const ticks = (a, b, n) => Array.from({length: n + 1}, (_, k) => a + (b - a) * k / n);
+
+  function update() {
+    ode = null; $('lg-ode').style.display = 'none';
+    $('ode-out').textContent = '버튼을 누르면 같은 입력을 물리 모델(ODE)로 풀어 겹쳐 보여 줍니다.';
+    draw1(); draw2();
+  }
+  function draw1() {
+    const p = M.predict(design), c = M.costs(design, econ, design.N, p.curve[p.curve.length - 1]);
+    const r180 = interp(180, p.t, p.curve);
+    let te = null; for (let k = 1; k < p.t.length; k++) if (p.curve[k] < 0.03) { te = p.t[k]; break; }
+    $('m-q0').textContent = fmt(p.Q0, 1); $('m-r180').textContent = r180.toFixed(3);
+    $('m-empty').textContent = te == null ? '없음' : fmt(te); $('m-boil').textContent = fmt(c.annual_boiloff); $('m-total').textContent = fmt(c.annual_total);
+    const series = [{x: p.t, y: p.curve, c: css('--accent'), w: 3}];
+    if (ode) series.push({x: ode.t, y: ode.ratio, c: css('--accent-2'), dash: [7, 5], w: 2.5});
+    chart($('cv-curve'), {x0: 0, x1: 365, y0: 0, y1: 1, xt: [0, 60, 120, 180, 240, 300, 365], yt: ticks(0, 1, 5), yf: v => v.toFixed(1),
+      xl: '시간 [day]', yl: '잔량비 [-]', series});
+  }
+  function draw2() {
+    const t0 = performance.now(), o = M.optimize(design, econ), ms = performance.now() - t0;
+    const R = o.rows, Ns = o.N, tot = R.map(r => r.depleted ? null : r.annual_total), boil = R.map(r => r.depleted ? null : r.annual_boiloff);
+    const ymax = niceMax(Math.max(...R.map(r => r.annual_mli), ...tot.filter(v => v != null), ...boil.filter(v => v != null)) * 1.05);
+    chart($('cv-cost'), {x0: 10, x1: 120, y0: 0, y1: ymax, xt: [10, 20, 40, 60, 80, 100, 120], yt: ticks(0, ymax, 5), yf: v => fmt(v),
+      xl: '적층수 N [layer]', yl: '연간 비용 [$/yr]', band: o.flat,
+      series: [{x: Ns, y: R.map(r => r.annual_mli), c: css('--accent')}, {x: Ns, y: boil, c: css('--accent-2')}, {x: Ns, y: tot, c: '#1baf7a', w: 3.5}],
+      vline: o.n_opt, vlabel: o.n_opt == null ? '' : `최적 N = ${o.n_opt}`, dot: o.n_opt == null ? null : {x: o.n_opt, y: o.total_opt, c: '#1baf7a'}});
+    $('o-n').textContent = o.n_opt ?? '없음'; $('o-total').textContent = fmt(o.total_opt);
+    $('o-flat').textContent = o.flat ? `${o.flat[0]} ~ ${o.flat[1]}` : '–'; $('o-ms').textContent = ms.toFixed(0);
+    $('o-warn').style.display = o.warnings.length ? '' : 'none'; $('o-warn').textContent = o.warnings.join(' · ');
+  }
+  function interp(x, xs, ys) { for (let k = 1; k < xs.length; k++) if (xs[k] >= x) { const a = (x - xs[k - 1]) / (xs[k] - xs[k - 1]); return ys[k - 1] + a * (ys[k] - ys[k - 1]); } return ys[ys.length - 1]; }
+
+  $('btn-ode').addEventListener('click', () => {
+    const t0 = performance.now(), p = M.predict(design), t1 = performance.now(), s = M.simulate(design), t2 = performance.now();
+    ode = s; $('lg-ode').style.display = '';
+    const err = p.curve.map((v, k) => Math.abs(v - s.ratio[k])), d365 = p.curve[p.curve.length - 1] - s.ratio[s.ratio.length - 1];
+    $('ode-out').innerHTML = `최대 오차 <b>${Math.max(...err).toFixed(4)}</b> · 365일 잔량비 오차 <b>${d365 >= 0 ? '+' : ''}${d365.toFixed(4)}</b>` +
+      ` · 보일오프 비용 차이 <b>${fmt(Math.abs(d365) * econ.p_h2 * s.m0)} $/yr</b> · 계산 시간 AI ${t1 - t0 < 0.1 ? '0.1 미만' : (t1 - t0).toFixed(1)} ms / ODE ${(t2 - t1).toFixed(1)} ms`;
+    draw1();
+  });
+  $('demo-meta').textContent = `브라우저 안에서 계산 · 서버 없음 · 대리모델 ${M.meta.name} (학습 데이터 ${M.meta.dataset}) · 물리 모델 ${M.meta.physics.version}`;
+  // 슬라이드가 보일 때 크기에 맞춰 다시 그린다
+  new MutationObserver(() => { if ($('demo1').classList.contains('on')) draw1(); if ($('demo2').classList.contains('on')) draw2(); })
+    .observe(document.getElementById('stage'), {subtree: true, attributes: true, attributeFilter: ['class']});
+  update();
+})();
+</script>
+</body>
+</html>

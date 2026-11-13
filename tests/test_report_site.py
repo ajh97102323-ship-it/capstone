@@ -37,5 +37,20 @@ def test_build_writes_self_contained_page(tmp_path):
     assert "NaN" not in re.search(r'<script id="data".*?</script>', html, re.S).group(0)
 
 
+def test_presentation_is_self_contained_with_demo(tmp_path):
+    from report_site import build_presentation
+    out = tmp_path / "p.html"
+    assert build_presentation.main(["--model", MODEL, "--out", str(out)]) == 0
+    html = out.read_text(encoding="utf-8")
+    # 외부 스크립트·스타일 없이 열린다(인터넷 없는 발표장)
+    assert not re.findall(r'<script[^>]*\ssrc=', html) and "<link" not in html
+    for key in ('id="demo1"', 'id="demo2"', 'id="btn-ode"', 'id="cv-cost"', "LH2.create", "Malgun Gothic"):
+        assert key in html, key
+    assert "__DEMO_DATA__" not in html and "/*__DEMO_CORE__*/" not in html
+    data = json.loads(re.search(r'<script id="demo-data" type="application/json">(.*?)</script>', html, re.S).group(1))
+    assert data["meta"]["name"] == "mlp_lhs_n500_seed42_seed0_tuned"
+    assert build_presentation.main(["--model", str(tmp_path / "none"), "--out", str(out)]) == 1
+
+
 def test_missing_input_returns_1(tmp_path):
     assert build.main(["--out", str(tmp_path), "--report", str(tmp_path / "none")]) == 1

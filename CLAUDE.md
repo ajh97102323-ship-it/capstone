@@ -20,6 +20,7 @@ python -m optimize.validate                                  # 설계 20개 SC-0
 streamlit run app/main.py                                    # 웹 UI (공유: --server.address 0.0.0.0, 모델 지정: $env:LH2_MODEL)
 ```
 
+- 발표 자료(시연 포함): `python -m report_site.build_presentation` → `docs/presentation.html`. 템플릿 `report_site/presentation_template.html`을 고치고 다시 만든다(docs 파일을 직접 고치지 않는다). 대리모델·ODE·비용을 브라우저에서 계산하는 `report_site/demo_core.js`는 `tests/test_demo_js.py`가 Python 값과 비교한다.
 - 결과 보고서: `python -m report_site.build` → `docs/index.html`. GitHub `main`에 push하면 Vercel이 `docs/`만 올린다(`vercel.json`, `.vercelignore`).
 - 플러그인: `plugins/lh2-kit/`(builder·verifier 에이전트, 보호 훅, `run-pipeline`·`publish-report` 스킬). 검사 `claude plugin validate ./plugins/lh2-kit`, 설치 `/plugin marketplace add ajh97102323-ship-it/capstone` → `/plugin install lh2-kit@lh2-capstone`. `.claude/`의 원본을 고치면 플러그인 사본도 같이 고친다.
 - 현재 기본 모델은 `optimize.DEFAULT_MODEL` = `models/mlp_lhs_n500_seed42_seed0_tuned`(사용자 지시로 500개 데이터, 002 SC-001·002 미달).
