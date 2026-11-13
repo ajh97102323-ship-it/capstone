@@ -111,6 +111,9 @@ code { font-size: 12px; }
 // 미리 보기 서비스(htmlpreview 등)는 외부 Chart.js를 늦게 불러오므로, 준비될 때까지 기다렸다 그린다.
 (function waitForChart(tries) {
   if (window.Chart) return main();
+  if (tries === 20) {  // 1초가 지나도 없으면(미리 보기 서비스가 외부 스크립트를 건너뜀) 직접 불러온다
+    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'; document.head.appendChild(s);
+  }
   if (tries > 200) { document.getElementById('foot').textContent = '그래프 라이브러리(Chart.js)를 불러오지 못했습니다.'; return; }
   setTimeout(() => waitForChart(tries + 1), 50);
 })(0);
