@@ -1,8 +1,11 @@
-numpy>=2.0
-scipy>=1.15
-matplotlib>=3.8
+# 학습된 모델(joblib)과 같은 버전으로 고정한다 (Streamlit Community Cloud 배포 포함, Python 3.13)
+numpy==2.4.6
+scipy==1.17.1
+scikit-learn==1.9.0
+joblib==1.5.3
+pandas==3.0.3
+matplotlib==3.11.2
+streamlit==1.58.0
+altair==6.2.1
+optuna==5.0.0
 pytest>=8.0
-scikit-learn>=1.5
-joblib>=1.4
-optuna>=3.6
-streamlit>=1.40
