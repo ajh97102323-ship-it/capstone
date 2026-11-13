@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/reports/**)",
+      "Edit(/models/**)",
+      "Edit(/data/datasets/**)",
+      "Bash(rm -rf *)",
+      "PowerShell(Remove-Item -Recurse *)"
+    ],
+    "ask": [
+      "Edit(/physics/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_protected.py\"",
+            "timeout": 30,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ]
+  }
+}

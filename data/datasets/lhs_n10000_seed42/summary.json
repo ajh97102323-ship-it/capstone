@@ -1,0 +1,20 @@
+{
+  "n_requested": 10000,
+  "n_valid": 10000,
+  "n_rejected": 0,
+  "reject_rate": 0.0,
+  "rejected_by_reason": {},
+  "split_counts": {
+    "train": 7000,
+    "val": 1500,
+    "test": 1500
+  },
+  "depleted_rate": 0.201,
+  "depleted_rate_by_split": {
+    "train": 0.2002857142857143,
+    "val": 0.21,
+    "test": 0.19533333333333333
+  },
+  "elapsed_sec": 22.976,
+  "warnings": []
+}

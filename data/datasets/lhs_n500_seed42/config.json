@@ -1,0 +1,95 @@
+{
+  "name": "lhs_n500_seed42",
+  "n_requested": 500,
+  "n_valid": 500,
+  "seed": 42,
+  "inputs": [
+    {
+      "name": "N",
+      "unit": "layers",
+      "lo": 10,
+      "hi": 120,
+      "scale": "int"
+    },
+    {
+      "name": "Nbar",
+      "unit": "layers/cm",
+      "lo": 10.0,
+      "hi": 30.0,
+      "scale": "linear"
+    },
+    {
+      "name": "eps",
+      "unit": "-",
+      "lo": 0.02,
+      "hi": 0.06,
+      "scale": "linear"
+    },
+    {
+      "name": "G_sup",
+      "unit": "W/K",
+      "lo": 0.0001,
+      "hi": 0.01,
+      "scale": "log"
+    },
+    {
+      "name": "Pv0",
+      "unit": "Pa",
+      "lo": 0.0001,
+      "hi": 0.1,
+      "scale": "log"
+    },
+    {
+      "name": "G_out",
+      "unit": "Pa·m³/s",
+      "lo": 1e-09,
+      "hi": 1e-06,
+      "scale": "log"
+    },
+    {
+      "name": "S",
+      "unit": "m³/s",
+      "lo": 0.0001,
+      "hi": 0.01,
+      "scale": "log"
+    },
+    {
+      "name": "R",
+      "unit": "m",
+      "lo": 0.3,
+      "hi": 2.5,
+      "scale": "linear"
+    },
+    {
+      "name": "LD",
+      "unit": "-",
+      "lo": 0.0,
+      "hi": 3.0,
+      "scale": "linear"
+    },
+    {
+      "name": "fill",
+      "unit": "-",
+      "lo": 0.5,
+      "hi": 0.95,
+      "scale": "linear"
+    }
+  ],
+  "fixed": {
+    "Th": 300.0
+  },
+  "days": 365.0,
+  "n_points": 100,
+  "split": [
+    0.7,
+    0.15,
+    0.15
+  ],
+  "physics": {
+    "version": "0.1.0",
+    "sha256": "30fca2abec3acb66f9bee066a31574f411e3ed4595d0a1f40a6bd7cc4367bbdb"
+  },
+  "defaults_modified": [],
+  "created_at": "2026-11-13T14:36:54+09:00",
+  "format_version": 1
+}
