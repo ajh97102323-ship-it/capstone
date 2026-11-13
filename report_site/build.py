@@ -221,6 +221,13 @@ code { font-size: 12px; }
 <script id="data" type="application/json">__DATA__</script>
 <script src="__CHART_JS__"></script>
 <script>
+// 미리 보기 서비스(htmlpreview 등)는 외부 Chart.js를 늦게 불러오므로, 준비될 때까지 기다렸다 그린다.
+(function waitForChart(tries) {
+  if (window.Chart) return main();
+  if (tries > 200) { document.getElementById('foot').textContent = '그래프 라이브러리(Chart.js)를 불러오지 못했습니다.'; return; }
+  setTimeout(() => waitForChart(tries + 1), 50);
+})(0);
+function main() {
 const D = JSON.parse(document.getElementById('data').textContent);
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fmt = (x, d = 0) => x == null ? '–' : Number(x).toLocaleString('ko-KR', {minimumFractionDigits: d, maximumFractionDigits: d});
@@ -330,6 +337,7 @@ el('tbl-val').innerHTML = '<tr><th>#</th><th>초기 질량 m0 [kg]</th><th>대�
   D.validate.designs.map((d, i) => `<tr><td>${i + 1}</td><td>${fmt(d.m0)}</td><td>${d.n_sur ?? '–'}</td><td>${d.n_ode ?? '–'}</td><td>${d.dN ?? '–'}</td><td>${fmt(d.n_analytic, 1)}</td><td>${pct(d.rel_cost_err)}</td><td>${sc(d.dN != null && Math.abs(d.dN) <= 2)}</td><td>${sc(d.rel_cost_err != null && d.rel_cost_err < 0.01)}</td></tr>`).join('');
 
 el('foot').innerHTML = `생성 ${D.built} · 물리 모델 ${D.physics ? D.physics.version + ' (' + D.physics.sha256.slice(0, 8) + ')' : '-'} · 대리모델 <code>${M.name}</code> · <code>python -m report_site.build</code>`;
+}
 </script>
 </body>
 </html>

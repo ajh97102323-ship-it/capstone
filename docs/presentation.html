@@ -245,7 +245,7 @@ function show(n) {
   slides.forEach((el, k) => el.classList.toggle('on', k === i));
   document.getElementById('pos').textContent = `${i + 1} / ${slides.length}`;
   document.getElementById('notes').textContent = '발표 메모: ' + (slides[i].dataset.notes || '');
-  history.replaceState(null, '', '#' + (i + 1));
+  try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) { /* 미리 보기 서비스 안에서는 주소 변경 불가 */ }
 }
 addEventListener('keydown', e => {
   if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
